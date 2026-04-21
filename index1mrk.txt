@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>経営戦略2級 Premium</title>
+<style>
+    /* ▼▼▼ ここで推しのイメージカラーを設定できます ▼▼▼ */
+    :root { 
+        --primary: #ff4081; /* ピンク系 */
+        --correct: #16a34a; 
+        --wrong: #dc2626; 
+        --bg: #f3f4f6; 
+        --card: rgba(255, 255, 255, 0.95); 
+    }
+    
+    body { 
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+        background-color: var(--bg); 
+        background-size: cover; 
+        background-position: center;
+        background-attachment: fixed;
+        color: #1f2937; margin: 0; padding: 0; 
+        display: flex; flex-direction: column; align-items: center; justify-content: center; 
+        min-height: 100vh; 
+        -webkit-tap-highlight-color: transparent; 
+    }
+    body::before {
+        content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.4); /* 背景の暗さ調整 */
+        z-index: -1;
+    }
+
+    .container { width: 100%; max-width: 600px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; height: 100vh; justify-content: center; }
+    
+    .card { background: var(--card); border-radius: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); padding: 24px; display: flex; flex-direction: column; max-height: 90vh; overflow-y: auto; backdrop-filter: blur(5px); }
+    
+    .title-screen { text-align: center; }
+    .title-screen h1 { font-size: 1.8rem; margin-bottom: 0.5rem; color: var(--primary); text-shadow: 1px 1px 0 #fff; }
+    
+    /* 画像エリア共通設定 */
+    .idol-image-area {
+        width: 100%; height: 200px; 
+        background-size: cover; background-position: center; 
+        border-radius: 12px; margin-bottom: 20px;
+        display: none; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    .idol-image-area.show { display: block; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+    .quiz-header { display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 0.9rem; color: #6b7280; font-weight: bold; }
+    .question-text { font-size: 1.1rem; font-weight: 600; margin-bottom: 24px; line-height: 1.6; white-space: pre-wrap; }
+    
+    .options-grid { display: grid; gap: 12px; }
+    .option-btn { background: #fff; border: 2px solid #e5e7eb; padding: 16px; border-radius: 12px; font-size: 1rem; text-align: left; cursor: pointer; transition: all 0.2s; color: #374151; font-weight: 500; }
+    .option-btn:active { transform: scale(0.98); }
+    .option-btn.correct { background: #dcfce7; border-color: var(--correct); color: var(--correct); font-weight: bold; }
+    .option-btn.wrong { background: #fee2e2; border-color: var(--wrong); color: var(--wrong); opacity: 0.7; }
+    .option-btn.disabled { pointer-events: none; }
+
+    .explanation-area { margin-top: 24px; padding: 16px; background: rgba(239, 246, 255, 0.8); border-radius: 12px; border-left: 5px solid var(--primary); display: none; animation: fadeIn 0.3s; }
+    .btn-primary { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 50px; font-size: 1.1rem; font-weight: bold; width: 100%; margin-top: 20px; cursor: pointer; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: transform 0.1s; }
+    .btn-primary:active { transform: scale(0.95); }
+    .btn-start { display: block; }
+    
+    .result-screen { text-align: center; display: none; }
+    .score-circle { width: 120px; height: 120px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; margin: 0 auto 24px; border: 4px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    .rank-text { font-size: 1.5rem; font-weight: bold; color: var(--primary); margin-bottom: 10px; display: block; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+
+    /* --- 10問達成ご褒美モーダルのスタイル --- */
+    .reward-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .reward-content {
+        background: #fff;
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        animation: popIn 0.5s ease;
+    }
+
+    .reward-content h2 {
+        color: #ff6b6b;
+        margin-bottom: 15px;
+    }
+
+    .reward-content img {
+        width: 100%;
+        height: auto;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+
+    .reward-content button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div id="start-screen" class="card title-screen">
+        <h1>経営戦略2級<br></h1>
+        <div id="start-image" class="idol-image-area show" style="height: 250px;"></div>
+        <p>今日も一緒に頑張りましょう！</p>
+        <button class="btn-primary btn-start" onclick="startQuiz()">勉強を始める</button>
+    </div>
+
+    <div id="quiz-screen" class="card" style="display: none;">
+        <div class="quiz-header">
+            <span id="progress-text">Q1</span>
+            <span id="score-text">Score: 0</span>
+        </div>
+
+        <div id="reaction-image" class="idol-image-area"></div>
+
+        <div id="question-text" class="question-text"></div>
+        <div id="options-container" class="options-grid"></div>
+        
+        <div id="explanation" class="explanation-area">
+            <span id="result-status" style="font-weight:bold; display:block; margin-bottom:5px;"></span>
+            <div id="explanation-content" style="font-size:0.95rem;"></div>
+        </div>
+
+        <button id="next-btn" class="btn-primary" onclick="nextQuestion()">次の問題へ</button>
+    </div>
+
+    <div id="result-screen" class="card result-screen">
+        <span id="rank-title" class="rank-text"></span>
+        <div id="result-image" class="idol-image-area show" style="height: 220px; margin-bottom: 20px;"></div>
+        <div class="score-circle">
+            <span id="final-score"></span>
+        </div>
+        <p id="feedback-message" style="font-weight: bold; color: #4b5563;"></p>
+        <button class="btn-primary btn-start" onclick="startQuiz()">もう一回！</button>
+    </div>
+</div>
+
+<div id="reward-modal" class="reward-modal" style="display: none;">
+    <div class="reward-content">
+        <h2>🎉 10問達成！お疲れ様！ 🎉</h2>
+        <img id="reward-img" src="" alt="ご褒美画像">
+        <button onclick="closeReward()">次の問題へ進む</button>
+    </div>
+</div>
+    
+<script>
+    // ★★★ 推し設定エリア ★★★
+    const idolConfig = {
+        background: "https://高画質ジャケット画像.com/blog/wp-content/uploads/2023/12/JWCD-63868-2048x1818.jpg",
+        start: "https://ogre.natalie.mu/media/news/music/2025/1103/1109_meguro01.jpg?imwidth=1280&imdensity=1",
+        
+        // 結果発表の画像（5段階）
+        result: {
+            rank5: "https://高画質ジャケット画像.com/blog/wp-content/uploads/2023/12/JWCD-63800.jpg",
+            rank4: "https://高画質ジャケット画像.com/blog/wp-content/uploads/2019/12/snow-man.jpg",
+            rank3: "https://stat.ameba.jp/user_images/20221130/13/blue1130v6/29/23/p/o1080038615210130880.png?caw=800",
+            rank2: "https://stat.ameba.jp/user_images/20221130/13/blue1130v6/e5/8e/p/o1080045815210130908.png?caw=800",
+            rank1: "https://stat.ameba.jp/user_images/20221130/13/blue1130v6/74/89/p/o0845025315210130918.png?caw=800"
+        }
+    };
+    
+    // 背景設定
+    document.body.style.backgroundImage = `url('${idolConfig.background}')`;
+    document.getElementById('start-image').style.backgroundImage = `url('${idolConfig.start}')`;
+
+    // ▼▼▼ 問題データ（ここに問題を追加してください） ▼▼▼
+    const allQuestions = [
+  {
+           // ▼▼▼ 問題データ（マーケティング2級 令和5年後期ベース） ▼▼▼
+const allQuestions = [
+    {
+        q: `【問題1 戦略の構成要素】
+企業が開発する戦略に含まれるべき要素とその説明の組合せとして適切なものは、次のうちどれか。
+
+1. 資源の展開：企業が参入しようとしている産業、製品ライン、市場セグメントの数と種類。
+2. 目的と目標：戦略を達成する水準には、売上高の成長や利益が含まれる。
+3. 範囲：企業が戦略を策定する際には、経営資源をどのように調達、配分するかを検討する必要がある。
+4. シナジー：企業戦略においては、競争の方法を示す必要が出てくる。
+5. 持続可能な競争優位の明確化：各事業や製品市場、あるいは資源や能力が互いに補強する場合に生み出される成果。`,
+        a: 2,
+        exp: "正解は「2」です。\n\n【解説】\n◯ 2：目的と目標（KPI設定）に関する正しい記述です。システムのSLA（サービス品質保証）やパフォーマンス要件を定義するフェーズに該当します [cite: 348]。\n✕ 1：記述は「範囲（事業ドメイン：Scope）」です [cite: 346]。\n✕ 3：記述は「資源の展開（リソース割り当て：Resource Deployment）」です。プロセスのメモリアロケーションの概念に似ています [cite: 349]。\n✕ 4：記述は「競争優位性（どう勝つか）」のアルゴリズムです [cite: 350]。\n✕ 5：記述は「シナジー（相乗効果）」です。複数モジュール連携による総合的なパフォーマンス向上を指します [cite: 350, 351]。"
+    },
+    {
+        q: `【問題3 ターゲティングの有効性】
+ターゲティングがマーケティング戦略の有効性を高める理由に関する記述として最も不適切なものは、次のうちどれか。
+
+1. 市場需要の変化に適応していこうとする企業の能力の最大化を可能にするため。
+2. 主要市場をカバーできる可能性を高めるため。
+3. マーケティング資源の適切な配分を可能にするため。
+4. 自社及び競合企業の強い点と弱い点というポジショニングの正確な評価が可能なため。
+5. 適切なマーケティング機会の発見及び正確なマーケティング目標の設定を可能にするため。`,
+        a: 2,
+        exp: "正解は「2」です（これが不適切）。\n\n【解説】\nターゲティング（標的市場の選定）の目的は、限られた経営資源（CPUやメモリ）を特定のセグメントに集中投下し、処理効率を最適化することです。「市場全体（全てのユースケース）をカバーする」というアプローチ（マス・マーケティング）は、リソースの分散（メモリリークやパフォーマンス低下）を招くアンチパターンであり、ターゲティングの設計思想（カプセル化やスコープの限定）と完全に矛盾します [cite: 358, 360]。"
+    },
+    {
+        q: `【問題4 ポジショニングの条件】
+ポジショニングの有効性を高める条件に関する記述として不適切なものは、次のうちどれか。
+
+1. ポジショニングを行う際の属性軸は、ターゲット顧客にとって重要なものでなければならない。
+2. 主要なターゲット市場に関するポジショニングをできる限り多面的に理解しておく必要がある。
+3. 市場・顧客ニーズの観点からポジショニングによって市場に提供する価格の要素を明確にする必要がある。
+4. ポジショニングに織り込まれるベネフィットは、ターゲット顧客に魅力あるものでなければならない。
+5. 選定された市場ポジションは、ターゲット顧客にとって理解しやすく、容易に伝達できることが必要である。`,
+        a: 2,
+        exp: "正解は「2」です（これが不適切）。\n\n【解説】\nポジショニングは、顧客の脳内に自社の明確な立ち位置（変数の値）を定義するプロセスです。そのため「多面的（複雑な多次元配列）」にアピールしようとすると、メッセージがぼやけて顧客の認知エラー（コンフリクト）を引き起こします。インターフェースはシンプルに「1つか2つの強力な軸（単一責任原則・KISS原則）」に絞り込むのが優れた設計です [cite: 366, 368]。"
+    },
+    {
+        q: `【問題5 MIS（マーケティング情報システム）】
+MIS（マーケティング情報システム）に関する記述として不適切なものは、次のうちどれか。
+
+1. MISで活用される情報は、全てマーケティング・リサーチで収集される。
+2. MISの支援により、取引業者や顧客との関係を強化し、競争優位を実現することが可能である。
+3. 定型的なマーケティング意思決定は、MISにより自動化することも可能である。
+4. マーケティング意思決定における仮説検証は、MISで支援することが可能である。
+5. MISを利用して、差別化された製品・サービスを開発する場合がある。`,
+        a: 1,
+        exp: "正解は「1」です（これが不適切）。\n\n【解説】\nMISのデータソースは、意図的に実施する「マーケティング・リサーチ（外部APIからの取得）」だけではありません。日々の売上データや顧客データといった「内部記録（DBのトランザクションログ）」や、日常的な環境情報の収集（デーモンによる環境変数の常時モニタリング）など、多様なデータソースを統合して構築されるシステムです。「全てリサーチで」という排他的な制約条件は仕様の誤認（バグ）です [cite: 372, 373]。"
+    },
+    {
+        q: `【問題8 インターネット・リサーチ】
+インターネットを活用したマーケティング・データの収集に関する記述として不適切なものは、次のうちどれか。
+
+1. インターネットを活用したデータ収集は、質問法ばかりでなく観察法にも見られるようになってきている。
+2. IoTは、データをリアルタイムかつ正確に収集できる手法の1つである。
+3. インターネットを活用した調査は全ての人を対象にできるので、あらゆる年齢層のデータ収集に適している。
+4. Web上の検索履歴や閲覧行動のデータを活用した行動ターゲティング広告は、近年多く利用されている広告手法である。
+5. 企業は、インターネットを通じたリサーチ活動が消費者のプライバシーを侵害する可能性に十分な注意と配慮をする必要がある。`,
+        a: 3,
+        exp: "正解は「3」です（これが不適切）。\n\n【解説】\nインターネット調査は「サンプリングバイアス（特定の属性への偏り）」という重大なバグを含みやすい手法です。全年齢層が均等にネットを使いこなしているわけではないため、「あらゆる年齢層に完璧に適している」とするのは仕様の誤認です。高齢者層のデータが欠損（Null）になりやすい点に注意し、エラーハンドリング（代替手法による補完）を検討する必要があります [cite: 403, 406]。"
+    },
+    {
+        q: `【問題9 サンプリング手法】
+単純無作為抽出法に関する記述として適切なものは、次のうちどれか。
+
+1. 母集団の中から最初の調査対象者をランダムに選んで、後のサンプルは一定の抽出間隔を決めて選び出す方法である。
+2. 母集団のサンプリング台帳からサンプルを1つずつランダムに抽出する方法である。
+3. 調査者が性別、年齢、職業などの人口構成比率に応じて標本数を割り当てる方法である。
+4. 母集団をあらかじめ等質なグループに分けておき、そのグループの大きさに比例してサンプルを抽出する方法である。
+5. 標本抽出を何段階にもわたって行う方法で、母集団の数が多く、地域的にも広く散在する場合などに用いられる。`,
+        a: 2,
+        exp: "正解は「2」です。\n\n【解説】\n◯ 2：これが単純無作為抽出法です。乱数生成関数（`Math.random()`など）を使って、配列（母集団）から完全にランダムに要素をフェッチする最もピュアなアルゴリズムです [cite: 411, 413]。\n✕ 1：系統抽出法（一定間隔のループ処理） [cite: 412]。\n✕ 3：割当抽出法（属性ごとの定数・ハードコード設定） [cite: 413]。\n✕ 4：層化抽出法（グループ分けしてからの比例抽出） [cite: 414]。\n✕ 5：多段抽出法（階層的な絞り込み処理） [cite: 415]。"
+    },
+    {
+        q: `【問題10 消費者の購買行動】
+消費者の購買行動に関する記述として適切なものは、次のうちどれか。
+
+1. 消費者は、外部情報の探索で十分な満足の決定が下せないとき、内部情報の探索を行う。
+2. 複雑な購買者の心的プロセスを階層に分けて可視化したものが、AIDAモデルである。
+3. 消費者の購買行動は、合理的な購買行動に限定される。
+4. 消費者行動には購買行動と消費行動が含まれ、購買に至るプロセスだけではなく購入後の消費行動の研究も重要である。
+5. 消費者購買意思決定プロセスの代替案の評価の段階で浮かんでくる「想起セット」は、通常、かなり多くのブランドが想起され考慮される。`,
+        a: 4,
+        exp: "正解は「4」です。\n\n【解説】\n◯ 4：消費者行動モデルにおいて、購買行動は「トランザクションの完了」で終わりではありません。その後の消費（利用体験）や廃棄に至るまでの「ライフサイクル全体（オブジェクトの生成から破棄・ガベージコレクションまで）」をトラッキングすることが、LTV（顧客生涯価値）向上の要件となります [cite: 416, 420]。\n✕ 1：順序が逆です。まずローカルキャッシュ（内部記憶）を検索し、ヒットしなければ外部API（外部情報）を叩きます [cite: 417]。\n✕ 5：思い浮かぶブランド（想起セット）は、人間のワーキングメモリの制約上、通常3〜5個程度に限定されます [cite: 421]。"
+    },
+    {
+        q: `【問題12 新製品開発プロセス】
+一般的な日用品の新製品開発のプロセスに関する記述として不適切なものは、次のうちどれか。
+
+1. アイデア創出：社内・社外双方からアイデアを得る。
+2. アイデア・スクリーニング：市場性、製造能力などの観点からアイデアをスクリーニングする。
+3. 製品コンセプトの決定：製品アイデアの4W1Hを決定することで製品コンセプトとする。
+4. 製品開発：選択されたコンセプトの試作品が作られ、実験室テストの結果により製品化が行われる。
+5. 市場テスト：新製品の失敗リスクを減少させるためであり、短期間で情報が得られ、コストが安いことがメリットである。`,
+        a: 5,
+        exp: "正解は「5」です（これが不適切）。\n\n【解説】\n市場テスト（テストマーケティング）は、本番環境（プロダクション）の一部に限定して実際に製品をリリースする「カナリアリリース」や「A/Bテスト」のようなプロセスです。リアルなデータが取れる反面、「期間がかかる」「コスト（インフラ費用や運用費）が高い」「競合にコード（新製品のアイデア）をリバースエンジニアリングされるリスクがある」といった強烈なデメリット（トレードオフ）が存在します [cite: 431, 441, 442]。"
+    },
+    {
+        q: `【問題14 小売業のFSP戦略】
+小売業のFSP（フリークエント・ショッパーズ・プログラム）戦略として適切なものは、次のうちどれか。
+
+1. 商品グレード別に価格を設定し、幅広い顧客グループに向けて商品をラインナップして提供する。
+2. 一定の期間、意図的に特定の商品を大幅な値引き価格で提供する。
+3. 上位の優良顧客を囲い込むために、認定した会員だけの特別価格などを提供する。
+4. 特定の商品に対して、変動のない安い価格を設定し、提供し続ける。
+5. ライバルの他店のチラシ持参により、他店よりも安い価格で同一商品を提供する。`,
+        a: 3,
+        exp: "正解は「3」です。\n\n【解説】\nFSPは、顧客の購買履歴（トランザクションログ）をデータベース化し、LTV（顧客生涯価値）の高い「優良顧客（ヘビーユーザー）」を特定して、VIP専用のルーティング（特別割引やポイント）を提供するアーキテクチャです。パレートの法則（2:8の法則）に基づき、システム全体の収益に最も貢献する2割のアクティブユーザーを離脱させないための堅牢な設計思想です [cite: 450, 453]。"
+    }
+];
+{
+        q: `【問題15 ダイナミック価格設定】
+ダイナミック価格設定に関する記述として不適切なものは、次のうちどれか。
+
+1. プロ野球の球団では、長年蓄積された顧客動向などのビッグ・データから、対象日程や席種、席数によって、価格を変動させ、集客を促進している。
+2. ガソリンスタンドでは、仕入れ値や需給状況によって、1リットル当たりのガソリンの値段を変動させている。
+3. 家電量販店では、商品の購入に際し、販売員と交渉しながら価格が調整され、売値が決定される。
+4. スーパーマーケットでは、特定商品について他店に比べて極端な低価格設定をすることで商品を提供し続け、購入意欲を促進し、集客を狙う。
+5. 電車のオフピーク定期券は、平日朝のピーク時間帯以外に限り使用できるもので、通常の定期券よりも格安で購入することができる。`,
+        a: 4,
+        exp: "正解は「4」です（これが不適切）。\n\n【解説】\nダイナミックプライシングは、需要と供給のトラフィックに応じて「リアルタイムに価格（リソース単価）を変動させる」仕組み（AWSのスポットインスタンスのようなもの）です。選択肢4は「常に極端な低価格で固定する」という静的（Static）な戦略であり、「ロスリーダー政策（目玉商品）」や「EDLP（Everyday Low Price）」と呼ばれる全く別のアプローチです。"
+    },
+    {
+        q: `【問題16 市場浸透価格設定】
+市場浸透価格設定によるマーケティング政策の説明として適切なものは、次のうちどれか。
+
+1. 高額製品を好む層にターゲットを絞り、高めの価格を設定し、収益を確保しようとするもの。
+2. 低所得層にターゲットを絞り、初期に安めの価格を設定することで、ターゲット内の市場シェアを確保するもの。
+3. 価格を高めに設定し、プロモーションや人的販売で大々的に告知することで、市場での認知度を上げていこうとするもの。
+4. ターゲットが購入する際に、製品の持つ機能や特長で比較して選択してもらうように、競合製品に合わせて価格を設定するもの。
+5. 競合製品を寄せつけない上に、ターゲットに魅力的と感じてもらうような低価格を設定し、初期段階で市場を占有しようとするもの。`,
+        a: 5,
+        exp: "正解は「5」です。\n\n【解説】\n市場浸透価格設定（ペネトレーション・プライシング）は、リリース初期に意図的に利益を削って低価格で提供し、一気に巨大なユーザーベース（シェア）を獲得する戦略です。IT業界で言えば「フリーミアムモデル」や「初期無料キャンペーン」でネットワーク外部性を急速に高め、競合の参入（フォーク）を防ぐ強力なアーキテクチャです。"
+    },
+    {
+        q: `【問題18 価格設定に関わる法律】
+価格設定に関わる法律の記述として不適切なものは、次のうちどれか。
+
+1. 独占禁止法は、公正かつ自由な競争を促進することによって、消費者の利益を確保することを目的にしている。
+2. カルテルとは、企業同士がお互いの利益を守るために競争を制限し、協議して協定を結ぶことであり、価格カルテル、数量カルテル、販路制限カルテルなどがある。
+3. 正当な理由がないのに、商品を著しく安い価格で継続的に販売することを不当廉売といい、不公正な取引方法に指定されている。
+4. 競争制限的な企業結合とは、入札価格法において、入札前に受注者や受注金額を決めることであり、不正競争防止法で禁止されている。
+5. 景品表示法における不当表示は、価格の不当な表示を規制するだけでなく、サービス品質に関する不当な表示にも及ぶ。`,
+        a: 4,
+        exp: "正解は「4」です（これが不適切）。\n\n【解説】\n入札前に事前に談合する行為（入札談合）を規制しているのは「独占禁止法（または刑法の談合罪）」です。「不正競争防止法」は、営業秘密の侵害やコピー商品の販売などを取り締まる法律です。どのセキュリティポリシー（法律）がどのインシデントに適用されるか、名前空間（管轄）の定義を間違えると致命的なコンプライアンス違反（バグ）となります。"
+    },
+    {
+        q: `【問題19 組織間システム】
+組織間システムに関する記述として適切なものは、次のうちどれか。
+
+1. チャネルを構成するメンバーは、各自の個別目的と組織間システムとしての目的を必ず合致させる必要がある。
+2. 組織間システムでは、チャネルを構成する各組織体（メンバー）はサブシステムとみなされ、固定的な役割を与えられ、変更することは許されない。
+3. 組織間システムは、チャネルを構成する各組織体を最適化させるための設計・構築・管理がされている。
+4. チャネル政策では、チャネル全体に目を向けて、組織間システム全体の最適化を目標とする必要がある。
+5. 組織間システムは、クローズド・システムの一種である。`,
+        a: 4,
+        exp: "正解は「4」です。\n\n【解説】\n流通チャネル（メーカー→卸→小売）を1つの大きなシステムと捉える考え方です。重要なのは「局所最適（各企業の利益の最大化）」ではなく「全体最適（サプライチェーン全体のスループット向上）」を目指すことです。個別のマイクロサービス（各企業）が単独で最適化されても、システム全体のボトルネックが解消されなければ意味がない、というアーキテクチャの基本と同じです。"
+    },
+    {
+        q: `【問題20 チェーン・オペレーション】
+チェーン・オペレーションに関する記述として不適切なものは、次のうちどれか。
+
+1. チェーン・オペレーションは、大量仕入れや統一プロモーションによる経営効率の向上を目的とする。
+2. チェーン・オペレーションでの本部機能は、バイイング・パワーをいかに確保していくかが大切である。
+3. ボランタリー・チェーンは、加盟店の資本的独立を維持したまま、規模のメリットを享受でき、強力な本部方針のもとに統一的な店舗運営が実現できる。
+4. フランチャイズ・チェーンは、加盟店が本部企業にロイヤルティを支払うことによって組織化されるため、短期間で店舗数拡大が可能である。
+5. レギュラー・チェーンは、本部と店舗が同じ資本であるケースが多いため、一体感が強く、仕入れ活動におけるバイイング・パワーが強い。`,
+        a: 3,
+        exp: "正解は「3」です（これが不適切）。\n\n【解説】\nボランタリー・チェーン（VC）は、独立した小売店が集まって共同仕入れなどを行う「緩やかなネットワーク（P2Pのような分散型）」です。そのため、フランチャイズ（FC）やレギュラーチェーン（RC）のような「強力な本部（中央集権サーバー）による統一的な管理」を強制することはできません。結合度が低い（疎結合である）ことがVCの特徴です。"
+    },
+    {
+        q: `【問題34 プロモーション効果モデル】
+プロモーション効果モデルの1つである「AISAS」において、（ ）に当てはまる用語として適切なものは、次のうちどれか。
+
+A: Attention  I: Interest  S:（ ）  A: Action  S: Share
+
+1. Scan
+2. Survey
+3. Split
+4. Sympathize
+5. Search`,
+        a: 5,
+        exp: "正解は「5」です。\n\n【解説】\nインターネット時代の消費者行動モデル「AISAS（アイサス）」の3つ目の「S」は「Search（検索）」です。ユーザーは興味（Interest）を持った後、すぐにアクション（購買）を起こすのではなく、必ず検索エンジンやSNSという「データベースに対してクエリを発行する（Search）」フェーズを挟みます。この検索トラフィックをいかに自社にルーティングさせるか（SEO等）が重要になります。"
+    },
+    {
+        q: `【問題36 生成AIと広告】
+生成AIを利用して広告表現物を作成する行為に関する記述として最も不適切なものは、次のうちどれか。
+
+1. 生成AIを利用する場合でも、指示の内容によって回答の精度が変わってくるので、前提情報を与えたり、字数や回答項目を指定したりするなど、人間の関与が重要になる。
+2. 生成AIを利用していても、そこに人間の「創作的寄与」があれば、生成された表現は著作権で保護される著作物になり得る。
+3. 生成AIを利用した結果、既存の著作物と酷似するものが出力された場合には、著作権侵害になる可能性がある。
+4. 生成AIは、どれも非営利目的の利用に限定されている。個人が趣味的に楽しむのはよいが、生成AIで作成した表現物を広告主に提案するのは違法行為になるので避けるべきである。
+5. 生成AIを利用した場合、その生成物の内容に虚偽が含まれていることもあるので、必ずその根拠や裏付けを自ら確認する必要がある。`,
+        a: 4,
+        exp: "正解は「4」です（これが不適切）。\n\n【解説】\n生成AIのAPIやサービスが「全て非営利目的に限定されている」というのは事実誤認です。オープンソースライセンス（MITやApache等）に商用利用可のものがあるように、商用利用を前提として提供されているエンタープライズ向けの生成AIモデルは多数存在します。ただし、利用規約（TOS）の確認とハルシネーション（虚偽出力）のチェックは必須の例外処理です。"
+    }
+{
+        q: `【問題2 事業の定義（マーケティング近視眼）】
+レビットは、論文「マーケティング近視眼」において、「アメリカの鉄道会社が衰退したのは、自社の事業を『輸送事業』ではなく『鉄道事業』と規定したことにある」と述べた [cite: 738]。これを踏まえて事業の定義を考える記述として適切なものは、次のうちどれか [cite: 739]。
+
+1. アメリカの鉄道会社が衰退した理由は、事業の定義を広く設定したことにある [cite: 740]。
+2. 最先端技術を扱う事業では、「製品中心」で事業の定義を考えた方がよい [cite: 741]。
+3. 事業の定義を「顧客中心」で考えることは、何のためにこの事業を行うのかという本来の目的を考える上で欠かせない [cite: 741]。
+4. 鉄道会社は、通信事業者を競争相手として意識する必要はない [cite: 742]。
+5. 事業の定義が戦略へつながるために、顧客、ニーズ、競合の3つの次元を考慮することが必要である [cite: 743]。`,
+        a: 3,
+        exp: "正解は「3」です。\n\n【解説】\nプログラミングにおける「ドメイン駆動設計（DDD）」と全く同じ思想です。自社のビジネス（ドメイン）を、手段である「製品・技術（ハードウェアや特定の言語）」で定義すると、技術の陳腐化とともにシステムがレガシー化します。常に「顧客が解決したい課題（ユーザー要件・インターフェース）」を中心に定義（抽象化）することで、環境変化に強いアーキテクチャになります [cite: 738, 741]。"
+    },
+    {
+        q: `【問題5 MIS（マーケティング情報システム）】
+マーケティング情報システムの構造とその特徴に関する記述として最も不適切なものは、次のうちどれか [cite: 769]。
+
+1. 日常的な業務が遂行された結果、発生するデータから構成されるシステム [cite: 770]。
+2. 変化するマーケティング環境を把握するため、日常業務場面で行う情報収集活動によって構成されるシステム [cite: 771]。
+3. 特定課題に対する調査データ (一次データ)を保存し、類似課題に再利用するシステム [cite: 772]。
+4. 各種情報を意思決定に有益な形に変換するためのモデルシステム [cite: 773]。
+5. マーケティング担当者によるデータやモデルの利用状況を構成するシステムで、データがあれば自動的に高度な判断が可能なシステム [cite: 774]。`,
+        a: 5,
+        exp: "正解は「5」です（これが不適切）。\n\n【解説】\n情報システム（MIS）は意思決定を「支援」するツール（ダッシュボードやBIツール）にすぎません。データベースにログが蓄積されているだけで、システムが「自動的に高度な経営判断（ビジネスロジックの自律実行）」をしてくれるわけではありません [cite: 774]。最終的な意思決定（コミット）を行うのは、あくまで人間の経営者やマーケターです。"
+    },
+    {
+        q: `【問題9 消費者行動モデル】
+消費者行動モデル・理論・分析に関する記述として不適切なものは、次のうちどれか [cite: 808]。
+
+1. 消費者行動の心理変化を5段階のプロセスにまとめたものを、「AIDMA理論」という [cite: 809]。
+2. 3つの尺度から、消費者のライフスタイルや価値基準を分析する手法を「AIO分析」という [cite: 809]。
+3. 「刺激一反応モデル」とは、内面ヘインプットされる「刺激」と、アウトプットされる「反応」との関係を分析する構造非明示型モデルのことである [cite: 810]。
+4. ロジャースの「革新の普及理論」において、他の消費者の購買に強い影響を与え、オピニオンリーダーとなるのは、革新者 (イノベータ)である [cite: 810]。
+5. 「認知的不協和の理論」とは、購買後に不協和が存在する場合、不協和な状態を「低減」、「回避」、又は「除去」する傾向があるとする理論のことである [cite: 811]。`,
+        a: 4,
+        exp: "正解は「4」です（これが不適切）。\n\n【解説】\nIT業界のオープンソース技術の普及を想像してください。「革新者（イノベーター）」は、実用性度外視でアルファ版に飛びつくマニアックな層であり、一般社会への影響力は持ちません [cite: 810]。市場全体に影響を与え、オピニオンリーダーとして機能する（メインストリームへの橋渡し役となる）のは、その次に採用する「初期採用者（アーリーアダプター）」です。"
+    },
+    {
+        q: `【問題26 SCM（サプライチェーン・マネジメント）の導入目的】
+アパレル大手A社は、サプライチェーン・マネジメントの導入によって生産から販売までの業務を効率化しようと計画している [cite: 989]。その導入の目的又は理由に関する記述として不適切なものは、次のうちどれか [cite: 989]。
+
+1. 流通在庫を削減するため [cite: 990]。
+2. 多くの製品のライフサイクルが短くなっているため [cite: 991]。
+3. サプライチェーンにおける川下の需要変動が、川上に向かうほど増幅することがあるため [cite: 992]。
+4. キャッシュ・フローを改善するため [cite: 993]。
+5. 流通チャネルにおけるハロー効果を避けるため [cite: 994]。`,
+        a: 5,
+        exp: "正解は「5」です（これが不適切）。\n\n【解説】\n「ハロー効果」とは、ある対象を評価する際、目立ちやすい特徴に引きずられて他の評価も歪んでしまうという心理的バイアス（UI/UXのバグ）のことです [cite: 994]。SCMは、情報の遅延をなくし、在庫の無駄（メモリの滞留）やブルウィップ効果（川上に行くほど需要予測のブレが増幅するエラー）を防ぐための「パイプライン最適化」の仕組みであり、ハロー効果とは全く関係がありません [cite: 989, 992]。"
+    },
+    {
+        q: `【問題34 プロモーション・ミックスの管理】
+プロモーション・ミックスの管理に関する記述として適切なものは、次のうちどれか [cite: 1045, 1046]。
+
+1. プロモーションの主なターゲットとして、消費者、販売業者、社内の三者が挙げられるが、販売業者がアプローチの最終目標となる [cite: 1047]。
+2. ターゲットの特定とは換言すれば個別化であるが、集団的な設定の方が効率的に情報の到達ができる [cite: 1048]。
+3. ターゲットにとって、プロモーション・メッセージに接するコンタクト・ポイントは固定的なので、それを観察することが重要となる [cite: 1049]。
+4. プロモーションの効果を上げるには、単発のメディアにし、チャネルも限定した方がよい [cite: 1050]。
+5. 顧客データベースを活用して、上位顧客に絞ったプロモーションを行うことができれば、より効率的に広告費を用いることができる [cite: 1051]。`,
+        a: 5,
+        exp: "正解は「5」です。\n\n【解説】\n◯ 5：CRM（顧客関係管理）の基本となるロジックです。データベースにクエリをかけてLTV（顧客生涯価値）の高い上位顧客を抽出し、そこにリソース（広告費）を集中投下することで、ROI（投資対効果）を劇的に高めることができます [cite: 1051]。\n✕ 1：最終目標は「消費者」です [cite: 1047]。\n✕ 4：複数のメディア・チャネルを組み合わせる（クロスメディア設計）ことで相乗効果が生まれます [cite: 1050]。"
+    },
+    {
+        q: `【問題39 人的販売】
+人的販売に関する記述として不適切なものは、次のうちどれか [cite: 1086]。
+
+1. 双方向コミュニケーションである [cite: 1087]。
+2. 顧客の不満や要望を把握する機会を獲得できる [cite: 1088]。
+3. プル戦略の1つである [cite: 1089]。
+4. 購買心理過程の最終段階での影響力が大きい [cite: 1090]。
+5. 目的は所有権の移転である [cite: 1090]。`,
+        a: 3,
+        exp: "正解は「3」です（これが不適切）。\n\n【解説】\n「人的販売（営業活動）」は、企業側から流通業者や顧客に直接働きかけて製品を押し込む「プッシュ戦略（Push型アーキテクチャ）」の代表例です [cite: 1089]。一方、「プル戦略（Pull型アーキテクチャ）」は、広告宣伝などを通じて顧客側から「欲しい」と指名買い（リクエスト）させる仕組みです。"
+    }
+    {
+        q: `【問題3 ポジショニングの有効性】
+ターゲットとする市場並びに顧客に対する自社及び製品、サービスにおけるポジショニングの有効性を高める基準として不適切なものは、次のうちどれか。
+
+1. 重要性：自社の提供する製品・サービスは、ターゲットにとって魅力あるものでなければならない。
+2. 標準性：自社の提供するベネフィットは、市場が多様化する中で、顧客のニーズを満たす必要がある。
+3. 独自性：ターゲットに提供する製品、サービスは、ユニークな特徴を持つものでなければならない。
+4. 優位性：ターゲットに提供する製品、サービスは、競合他社と比べて優れていることが必要である。
+5. 明確性：ターゲットにとって理解しやすく、伝達しやすいことが必要である。`,
+        a: 1, // インデックス調整用。選択肢2が正解なので配列インデックスは1。
+        exp: "正解は「2」です（これが不適切）。\n\n【解説】\nAPIの仕様策定などでは「標準性（Standardization）」が重要ですが、マーケティングの「ポジショニング」においては、他社と同じ標準的な価値を提供しても埋没してしまいます。必要なのは標準性ではなく、他社とは違う明確な立ち位置（差別化・独自性）を示すことです。"
+    },
+    {
+        q: `【問題12 製品ライフサイクル】
+製品ライフサイクルに関する記述として不適切なものは、次のうちどれか。
+
+1. 導入期から成長初期の顧客は、知識があり、関与水準も高い革新者により市場は牽引される傾向がある。
+2. 導入期は先発ブランドが第一想起として認知された場合、後発が同等製品を提供しても先発優位性は崩しにくい。
+3. 成長期に入ると売上高も拡大するため、参入企業が増加し始める。この時期の製品戦略は同質化である。
+4. 成熟市場では、需要喚起のため既存製品と品質的に大きな差が無い新製品を毎年導入する計画的陳腐化が行われる場合がある。
+5. 成熟期はこの時期は市場を延命するため品質改良などにより、使用機会・使用量を増やす政策が有効である。`,
+        a: 2,
+        exp: "正解は「3」です（これが不適切）。\n\n【解説】\n成長期（Growth）は競合が次々とフォーク（参入）してくるフェーズです。ここで「同質化（他社と同じ機能を提供する）」をしてしまうと価格競争に巻き込まれます。成長期の正しい戦略は、ターゲットの細分化に合わせて機能を追加・分岐させる「製品の改良・多様化（差別化）」です。"
+    },
+    {
+        q: `【問題15 競争志向型価格設定】
+競争志向型価格設定に関する記述として最も不適切なものは、次のうちどれか。
+
+1. 家電量販店では、自社の扱う商品を、他店のチラシにある価格に合わせて販売した。
+2. シェアの高いリーダー企業の商品価格を参考にして、その価格よりも少し低い価格を設定した。
+3. 競合他社のシェアを奪う目的で企画された戦略商品のため、目標売上金額に基づき価格を設定し、値引き率の上限を設定した。
+4. 公設機関として運営されている卸売市場では、入札売買が行われている。
+5. 公共事業の発注案件について、公示された条件に基づき、価格を提示し、指名を受けた。`,
+        a: 2,
+        exp: "正解は「3」です（これが不適切）。\n\n【解説】\n「競争志向（外部の競合データを参照する）」の価格設定手法を問う問題です。選択肢3は「自社の目標売上金額（内部のKPI）」をベースにアルゴリズムを組んでおり、これは「需要（または利益）志向」の価格設定に該当します。外部の競合を見ていないため不適切です。"
+    },
+    {
+        q: `【問題21 延期型流通】
+延期型流通に関する記述として適切なものの組合せは、次のうちどれか。
+
+A. 小売業の在庫負担と在庫のためのスペースの削減ができる。
+B. 大ロット配送による配送費用の削減が可能になる。
+C. 早めに仕入れておくため、欠品の可能性が少なくてすむ。
+D. 需要があるたびに店舗に納品することで、不確実性に対応する。
+
+1. A、B
+2. A、D
+3. B、C
+4. B、D
+5. C、D`,
+        a: 1,
+        exp: "正解は「2（AとDの組合せ）」です。\n\n【解説】\n延期型流通は、プログラミングにおける「遅延評価（Lazy Evaluation）」と同じ概念です。需要が確定するギリギリまで商品の完成や配送を「遅らせる（メモリを確保しない）」ことで、無駄な在庫リスクやスペースの浪費を劇的に削減（A）し、需要変動の不確実性に柔軟に対応（D）するアーキテクチャです。"
+    },
+    {
+        q: `【問題24 電子マネー決済導入のメリット】
+電子マネー決済の店舗導入メリットに関する記述として不適切なものは、次のうちどれか。
+
+1. 電子マネー決済ができなかったことで取りこぼしていた客層を呼び込むことができる。
+2. 現金管理のためのコスト(労力、費用など)が削減できる。
+3. 購買履歴を収集・分析することで、販売促進策などへ反映できる。
+4. 初期投資だけで、維持に関してのコストがかからないので、容易にスタートができる。
+5. スムーズな支払ができることによる、店内混雑の回避が可能となる。`,
+        a: 3,
+        exp: "正解は「4」です（これが不適切）。\n\n【解説】\n決済システムの導入（SaaS連携など）において、「維持コストがゼロ」ということはあり得ません。初期の端末代（イニシャルコスト）だけでなく、決済ごとの「手数料」や「ネットワーク通信費」「システム保守費」といったランニングコストが必ず発生します。"
+    },
+    {
+        q: `【問題27 3PL（サード・パーティー・ロジスティクス）】
+サード・パーティー・ロジスティクス (3PL) に関する記述として適切なものは、次のうちどれか。
+
+1. 3PL事業者を活用することにより、荷主はロジスティクスに関するノウハウを蓄積することができる。
+2. 3PL事業者は、従来の荷受業者と比べて、特定のロジスティクス業務に特化している。
+3. 3PLは、業務として3PL事業者が荷主との長期的な関係を構築することになる。
+4. 3PLを行う主な事業者として、小売業者が挙げられる。
+5. 3PLを依頼する荷主にとって、3PLは倉庫への投資が少なくなる代わりに在庫が増えることが懸念される。`,
+        a: 2,
+        exp: "正解は「3」です。\n\n【解説】\n3PLは、自社の物流インフラ構築・運用を外部の専門業者に丸ごと委託する「マネージドサービス（MSP）」のようなものです。単なる下請けではなく、戦略的なパートナーとして包括的に受託するため、SLA（サービスレベル合意）に基づく「長期的な関係構築」が必須となります。"
+    },
+    {
+        q: `【問題36 広告クリエイティブの著作権等】
+広告クリエイティブに関する記述として不適切なものは、次のうちどれか。
+
+1. テレビCM用にコマーシャル・ソングを制作した場合、その著作権は制作費を負担したことによって広告主に帰属することになる。
+2. 広告にタレントを起用する場合、同業種の企業の広告に出演していないか、調べておく必要がある。
+3. 一般的に、広告のキャッチコピーのような短いフレーズについては、言語の著作物として認められないと考えられている。
+4. 街中の風景を撮影した場合、後ろ姿で顔が見えておらず、その人だと特定できないような状態であれば、肖像権の問題は生じない。
+5. WEBで流していた動画と全く同じ内容であっても、テレビCMでは放送できないケースがある。`,
+        a: 0, // 選択肢1が正解(不適切)なのでインデックス0
+        exp: "正解は「1」です（これが不適切）。\n\n【解説】\nシステム開発における「知的財産権（IP）」の取り扱いと同じです。制作費を支払ったからといって、著作権（ソースコードの権利）が自動的に発注者（広告主）に譲渡されるわけではありません。法律上、著作権は原則として「創作者（作曲家）」に帰属するため、権利を移転するには明示的な契約（ライセンス譲渡条項）が必要です。"
+    }
+
+
+
+
+
+
+       // ... ここに他の問題データをすべて貼り付けてください ...
+    ];
+
+    let currentQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let isAnswering = true; // 回答可能かどうか
+
+    // 変数の追加
+    let sessionAnswerCount = 0; // セッション中に何問解いたかをカウント
+
+    // 推し画像のリスト（10問ごとのご褒美）
+    const oshiImages = [
+        "https://ogre.natalie.mu/media/news/music/2025/1202/kikkoman_sukiyaki_meguro_1.jpg?imwidth=1280&imdensity=1",
+        "https://ogre.natalie.mu/media/news/music/2025/1201/afternoontea_attakatumbler_Keyvisual.jpg?imwidth=1280&imdensity=1",
+        "https://ogre.natalie.mu/media/news/music/2025/1124/anan2474.jpg?imwidth=400&imdensity=1",
+        "https://ogre.natalie.mu/media/news/music/2025/1124/anan2474_SP.jpg?imwidth=400&imdensity=1",
+        "https://ogre.natalie.mu/media/news/music/2025/1122/ATZ_3854.jpg?imwidth=1460&imdensity=1&impolicy=hq",
+        "https://ogre.natalie.mu/media/news/music/2025/1120/ATZ_3752.jpg?imwidth=400&imdensity=1",
+        "https://ogre.natalie.mu/media/news/music/2025/1104/DSC_0510.jpg?imwidth=1460&imdensity=1&impolicy=hq",
+        "https://ogre.natalie.mu/media/news/music/2025/1026/4s41_025_01.jpg?imwidth=1280&imdensity=1"
+    ];
+
+    // 配列操作関数
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // 問題文のパース（テキスト形式への対応）
+    function parseQuestion(qData) {
+        // もしすでに数値のaなら、indexに直す(1始まり->0始まり)
+        let ansIdx = (typeof qData.a === 'number') ? qData.a - 1 : parseInt(qData.a) - 1;
+
+        // 改行で選択肢が分かれている形式の場合の処理
+        // (JSON形式で記述されている場合はそのまま利用)
+        let options = ["1", "2", "3", "4", "5"]; // デフォルト
+        let text = qData.q;
+
+        // 問題文中に選択肢が含まれている場合の簡易パース（これまでの形式対応）
+        if(qData.q.includes("1.")){
+             const parts = qData.q.split(/\n\n1\./); 
+             if(parts.length > 1){
+                 text = parts[0];
+                 const optionsText = "1." + parts[1];
+                 const tempOpts = optionsText.split(/\n/).map(o => o.replace(/^\d+\.\s*/, '').trim()).filter(o => o);
+                 if(tempOpts.length >= 2) options = tempOpts;
+             }
+        }
+        
+        return { text: text, options: options, answerIdx: ansIdx, exp: qData.exp };
+    }
+
+    function startQuiz() {
+        if(allQuestions.length === 0) { alert("問題データがありません！"); return; }
+        currentQuestions = shuffleArray([...allQuestions]);
+        currentIndex = 0;
+        score = 0;
+        sessionAnswerCount = 0;
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'flex';
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        isAnswering = true;
+        const qData = currentQuestions[currentIndex];
+        const parsed = parseQuestion(qData);
+        
+        document.getElementById('progress-text').textContent = `Q${currentIndex + 1} / ${currentQuestions.length}`;
+        document.getElementById('score-text').textContent = `Score: ${score}`;
+        document.getElementById('question-text').textContent = parsed.text;
+        
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = '';
+
+        parsed.options.forEach((optText, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.textContent = optText;
+            // 重要：クリック時に正解番号(parsed.answerIdx)と、選んだ番号(i)を渡す
+            btn.onclick = () => checkAnswer(i, parsed.answerIdx, btn);
+            optionsContainer.appendChild(btn);
+        });
+
+        // 解説エリアと「次へ」ボタンを隠す
+        document.getElementById('explanation').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+    }
+
+    // --- 修正版 checkAnswer ---
+    function checkAnswer(selectedIdx, correctIdx, btnElement) {
+        if (!isAnswering) return; // 連打防止
+        isAnswering = false;
+
+        const statusText = document.getElementById('result-status');
+        const explanationText = document.getElementById('explanation-content');
+        const explanationArea = document.getElementById('explanation');
+        const nextBtn = document.getElementById('next-btn');
+        
+        // 正誤判定
+        if (selectedIdx === correctIdx) {
+            statusText.textContent = "正解！🎉";
+            statusText.style.color = "var(--correct)";
+            btnElement.classList.add('correct');
+            score++; // スコア加算
+            document.getElementById('score-text').textContent = `Score: ${score}`;
+        } else {
+            statusText.textContent = "残念...不正解 💦";
+            statusText.style.color = "var(--wrong)";
+            btnElement.classList.add('wrong');
+            
+            // 正解のボタンを強調表示
+            const allBtns = document.querySelectorAll('.option-btn');
+            if(allBtns[correctIdx]) {
+                allBtns[correctIdx].classList.add('correct');
+            }
+        }
+        
+        // すべてのボタンを無効化
+        const allBtns = document.querySelectorAll('.option-btn');
+        allBtns.forEach(btn => btn.classList.add('disabled'));
+
+        // 解説表示
+        const currentQ = currentQuestions[currentIndex];
+        explanationText.innerText = currentQ.exp; 
+        explanationArea.style.display = 'block';
+        nextBtn.style.display = 'block'; // 次へボタンを表示
+
+        // 10問ごとのご褒美ロジック
+        sessionAnswerCount++;
+        if (sessionAnswerCount > 0 && sessionAnswerCount % 10 === 0) {
+            setTimeout(() => {
+                showReward();
+            }, 800); 
+        }
+    }
+
+    // ご褒美モーダル関連
+    function showReward() {
+        const modal = document.getElementById('reward-modal');
+        const img = document.getElementById('reward-img');
+        const randomImg = oshiImages[Math.floor(Math.random() * oshiImages.length)];
+        img.src = randomImg;
+        modal.style.display = 'flex';
+    }
+
+    function closeReward() {
+        document.getElementById('reward-modal').style.display = 'none';
+    }
+
+    function nextQuestion() {
+        currentIndex++;
+        if (currentIndex < currentQuestions.length) {
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        
+        const finalScore = document.getElementById('final-score');
+        finalScore.textContent = `${score}`;
+        
+        const feedback = document.getElementById('feedback-message');
+        const rankTitle = document.getElementById('rank-title');
+        const resultImg = document.getElementById('result-image');
+        
+        const percent = (score / currentQuestions.length) * 100;
+        
+        if (percent >= 95) {
+            rankTitle.textContent = "Rank SS : 神レベル！";
+            feedback.textContent = "完璧です！世界一かっこいい！";
+            resultImg.style.backgroundImage = `url('${idolConfig.result.rank5}')`;
+        } else if (percent >= 85) {
+            rankTitle.textContent = "Rank S : 最高！";
+            feedback.textContent = "その調子！合格間違いなしだね！";
+            resultImg.style.backgroundImage = `url('${idolConfig.result.rank4}')`;
+        } else if (percent >= 70) {
+            rankTitle.textContent = "Rank A : すごい！";
+            feedback.textContent = "合格圏内！あとちょっとで完璧！";
+            resultImg.style.backgroundImage = `url('${idolConfig.result.rank3}')`;
+        } else if (percent >= 50) {
+            rankTitle.textContent = "Rank B : 頑張った！";
+            feedback.textContent = "基礎はOK！苦手なところを見直そう。";
+            resultImg.style.backgroundImage = `url('${idolConfig.result.rank2}')`;
+        } else {
+            rankTitle.textContent = "Rank C : まだまだ伸びる！";
+            feedback.textContent = "諦めないで！私が応援してるよ！";
+            resultImg.style.backgroundImage = `url('${idolConfig.result.rank1}')`;
+        }
+    }
+</script>
+
+</body>
+</html>
